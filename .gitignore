@@ -1,0 +1,9 @@
+*.pyc
+
+*.swp
+
+imgs
+
+labels
+
+pkls
