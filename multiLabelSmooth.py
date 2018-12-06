@@ -58,7 +58,7 @@ def main():
                 image_datasets[x], 
                 batch_size=64,
                 shuffle=True, 
-                num_workers=8)
+                num_workers=4)
             for x in ['train', 'val']
             }
 
@@ -81,7 +81,7 @@ def main():
 
         for epoch in range(num_epochs):
             print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-            print('-' * 50)
+            print('-' * 100)
 
             # Each epoch has a training and validation phase
             for phase in ['train', 'val']:
@@ -123,8 +123,8 @@ def main():
                         # add_summary_value(tb_summary_writer, 'learning_rate', scheduler, iteration)
 
                     if (iteration % print_every == 0):
-                        print('{} : Epoch {} Iteration {} Loss: {:.4f} Acc: {:.4f}'.format(
-                                    phase, epoch, iteration, running_loss, running_corrects))
+                        print('{} : Epoch {} Iteration {} Loss: {:.4f} running_loss: {:.4f}, Acc: {:.4f}'.format(
+                                    phase, epoch, iteration, loss, running_loss, running_corrects))
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
@@ -170,7 +170,16 @@ def main():
     # todo : adapt to label smoothing
     criterion = nn.BCEWithLogitsLoss()
     # Observe that all parameters are being optimized
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    optimizer_ft = optim.SGD(
+            model_ft.parameters(), 
+            lr=0.1, 
+            momentum=0.9)
+    '''
+    optimizer_ft = optim.Adam(
+            model_ft.parameters(), 
+            lr = 0.00001
+            )
+    '''
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
