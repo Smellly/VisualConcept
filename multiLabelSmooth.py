@@ -27,7 +27,6 @@ def add_summary_value(writer, key, value, iteration):
     if writer:
         writer.add_scalar(key, value, iteration)
 
-
 def main():
     data_dir = '/media/disk0/jay/workspace/visual-concept/imgs'
 
@@ -66,6 +65,7 @@ def main():
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     log_every = 10
+    print_every = 10 
     checkpoint_path = 'logs'
     if not os.path.exists(checkpoint_path):
         os.mkdir(checkpoint_path)
@@ -121,6 +121,10 @@ def main():
                     if (iteration % log_every == 0):
                         add_summary_value(tb_summary_writer, 'train_loss', loss, iteration)
                         # add_summary_value(tb_summary_writer, 'learning_rate', scheduler, iteration)
+
+                    if (iteration % print_every == 0):
+                        print('{} : Epoch {} Iteration {} Loss: {:.4f} Acc: {:.4f}'.format(
+                                    phase, epoch, iteration, running_loss, running_corrects))
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
