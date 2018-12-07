@@ -47,6 +47,7 @@ def main():
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
     }
+    batch_size = 32
     image_datasets = {
             x: VisualConceptDataset(
                 os.path.join(data_dir, x),
@@ -56,7 +57,7 @@ def main():
     dataloaders = {
             x: torch.utils.data.DataLoader(
                 image_datasets[x], 
-                batch_size=32,
+                batch_size=batch_size,
                 shuffle=True, 
                 num_workers=4)
             for x in ['train', 'val']
