@@ -35,7 +35,7 @@ class VisualConceptDataset(Dataset):
             image = self.transform(image)
 
         label = np.load(imgname.replace('imgs', 'labels') + ".npy")
-        # print 'label:', label.shape
+        # print 'label:', label.shape, image.size()
         return image, label
 
     def __len__(self):

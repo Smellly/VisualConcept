@@ -34,14 +34,14 @@ def main():
     # Just normalization for validation
     data_transforms = {
         'train': transforms.Compose([
-            transforms.Resize(256),
+            transforms.Resize((256, 256)),
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
         'val': transforms.Compose([
-            transforms.Resize(224),
+            transforms.Resize((224, 224)),
             # transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -56,14 +56,14 @@ def main():
     dataloaders = {
             x: torch.utils.data.DataLoader(
                 image_datasets[x], 
-                batch_size=64,
+                batch_size=32,
                 shuffle=True, 
                 num_workers=4)
             for x in ['train', 'val']
             }
 
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
     log_every = 10
     print_every = 10 
     checkpoint_path = 'logs'
@@ -98,6 +98,7 @@ def main():
                 for inputs, labels in dataloaders[phase]:
                     inputs = inputs.to(device)
                     labels = labels.float().to(device)
+                    # print('in:', inputs.size(), labels.size())
 
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -105,7 +106,8 @@ def main():
                     # forward
                     # track history if only in train
                     with torch.set_grad_enabled(phase == 'train'):
-                        preds = model(inputs)
+                        outputs = model(inputs)
+                        preds = torch.ceil(outputs)
                         loss = criterion(preds, labels)
 
                         # backward + optimize only if in training phase
@@ -115,7 +117,8 @@ def main():
 
                     # statistics
                     running_loss += loss.item() * inputs.size(0)
-                    running_corrects += torch.sum(preds == labels.data)
+                    running_corrects += torch.sum(preds == labels.data) 
+                    # print('pred:', preds.size(), labels.size())
 
                     iteration += 1
                     if (iteration % log_every == 0):
@@ -124,7 +127,8 @@ def main():
 
                     if (iteration % print_every == 0):
                         print('{} : Epoch {} Iteration {} Loss: {:.4f} running_loss: {:.4f}, Acc: {:.4f}'.format(
-                                    phase, epoch, iteration, loss, running_loss, running_corrects))
+                                    phase, epoch, iteration, loss, running_loss, 
+                                    running_corrects/batch_size))
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
