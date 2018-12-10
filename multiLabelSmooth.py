@@ -47,7 +47,7 @@ def main():
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
     }
-    batch_size = 64
+    batch_size = 32
     image_datasets = {
             x: VisualConceptDataset(
                 os.path.join(data_dir, x),
@@ -64,7 +64,7 @@ def main():
             }
 
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
     log_every = 10
     print_every = 100 
     checkpoint_path = 'logs'
@@ -97,8 +97,10 @@ def main():
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
-                    inputs = inputs.to(device)
-                    labels = labels.float().to(device)
+                    # inputs = inputs.to(device)
+                    inputs = inputs.cuda()
+                    # labels = labels.float().to(device)
+                    labels = labels.float().cuda()
                     # print('in:', inputs.size(), labels.size())
 
                     # zero the parameter gradients
@@ -109,7 +111,7 @@ def main():
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(inputs)
                         preds = torch.ceil(outputs)
-                        loss = criterion(preds, labels)
+                        loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase
                         if phase == 'train':
@@ -175,7 +177,8 @@ def main():
     model_ft.fc = nn.Linear(fc_features, 9360)
 
     # model_ft = myResnet(model, 9360)
-    model_ft = model_ft.to(device)
+    # model_ft = model_ft.to(device)
+    model_ft = model_ft.cuda()
     # todo : adapt to label smoothing
     criterion = nn.BCEWithLogitsLoss()
     # Observe that all parameters are being optimized
