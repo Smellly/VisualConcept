@@ -110,7 +110,7 @@ def main():
                     # track history if only in train
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(inputs)
-                        preds = torch.ceil(outputs)
+                        preds = torch.gt(outputs, 0)
                         loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase

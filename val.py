@@ -90,16 +90,16 @@ def main():
         logit = model(input_img)
         pred = torch.ceil(logit).cpu().data.numpy()
         # pred = nn.functional.softmax(logit).cpu().data.numpy()
-        pred2 = nn.functional.binary_cross_entropy_with_logits(logit).cpu().data.numpy()
+        pred2 = logit.cpu().data.numpy()
         
         captions = getLabel(imgname)
         
         words = []
         # print(pred[0], pred[0].shape)
-        print(pred2.shape, pred2[0], pred2[0].shape)
+        # print(pred2.shape, pred2[0], pred2[0].shape)
 
-        for ind, val in enumerate(pred[0]):
-            if val == 1:
+        for ind, val in enumerate(pred2[0]):
+            if val > 1:
                 words.append(vocab[ind])
         print('imgname:', imgname)
         print('words:', words)
