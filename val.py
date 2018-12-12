@@ -9,6 +9,7 @@ from torch.optim import lr_scheduler
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
+from torch.autograd import Variable as V
 
 from visualConceptDataset import VisualConceptDataset
 from myNets import myResnet
@@ -22,7 +23,20 @@ from PIL import Image
 import pickle as pkl
 
 def getImglist(path):
-    pass
+    p = 'imgs/train/'
+    l = [
+        'COCO_train2014_000000000009.jpg',
+        'COCO_train2014_000000000025.jpg',
+        'COCO_train2014_000000000030.jpg',
+        'COCO_train2014_000000000034.jpg',
+        'COCO_train2014_000000000049.jpg',
+        'COCO_train2014_000000000061.jpg',
+        'COCO_train2014_000000000064.jpg',
+        'COCO_train2014_000000000071.jpg',
+        'COCO_train2014_000000000072.jpg'
+        ]
+    imglist = [p + x for x in l]
+    return imglist
 
 def loadModel(modelPath):
     model = models.resnet101()
@@ -32,7 +46,7 @@ def loadModel(modelPath):
     model.eval()
 
     # load best model weights
-    model.load_state_dict(modelPath)
+    model.load_state_dict(torch.load(modelPath))
     return model
 
 def loadVocab(vocabPath):
@@ -40,14 +54,31 @@ def loadVocab(vocabPath):
         vocab = pkl.load(f)
     return vocab
 
+def getLabel(imgname):
+    path = '/media/disk0/jay/workspace/places365/mscoco_train2014/'
+    filename = imgname.split('/')[-1].replace('.jpg', '.txt')
+    with open(path + filename, 'r') as f:
+        raw = f.read().splitlines()
+
+    return raw
+
+def returnTF():
+    tf = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+    return tf
+
 def main():
-    imglist = getImglist()
-    modelPath = 'log/model-best.pth'
+    imglist = getImglist(None)
+    modelPath = 'logs/model-best.pth'
     vocabPath = 'pkls/vocab_clean.pkl'
     model = loadModel(modelPath)
     vocab = loadVocab(vocabPath)
+    tf = returnTF()
 
-    for imgname in tqdm(imglist):
+    for imgname in imglist:
         try:
             img = Image.open(imgname).convert('RGB')
         except IOError:
@@ -55,17 +86,27 @@ def main():
             continue
 
         input_img = V(tf(img).unsqueeze(0)).cuda()
-        logit = model.forward(input_img)
-        pred = torch.ceil(output)
+        # logit = model.forward(input_img)
+        logit = model(input_img)
+        pred = torch.ceil(logit).cpu().data.numpy()
+        # pred = nn.functional.softmax(logit).cpu().data.numpy()
+        pred2 = nn.functional.binary_cross_entropy_with_logits(logit).cpu().data.numpy()
+        
+        captions = getLabel(imgname)
         
         words = []
-        for ind, val in enumerate(pred):
-            if val == 1:
-                words.append(vocab.index(ind))
-        print words
+        # print(pred[0], pred[0].shape)
+        print(pred2.shape, pred2[0], pred2[0].shape)
 
-if __name__ == '__main__':
-    main()
+        for ind, val in enumerate(pred[0]):
+            if val == 1:
+                words.append(vocab[ind])
+        print('imgname:', imgname)
+        print('words:', words)
+        print('captions:')
+        for cap in captions:
+            print(cap)
+        print()
 
 if __name__ == '__main__':
     main()

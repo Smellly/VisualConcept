@@ -47,7 +47,7 @@ def main():
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
     }
-    batch_size = 32
+    batch_size = 64
     image_datasets = {
             x: VisualConceptDataset(
                 os.path.join(data_dir, x),
@@ -67,7 +67,7 @@ def main():
     # device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
     log_every = 10
     print_every = 100 
-    checkpoint_path = 'logs'
+    checkpoint_path = 'slogs'
     if not os.path.exists(checkpoint_path):
         os.mkdir(checkpoint_path)
     tb_summary_writer = tb and tb.SummaryWriter(checkpoint_path)
@@ -152,10 +152,10 @@ def main():
                     best_model_wts = copy.deepcopy(model.state_dict())
                     torch.save(
                             model.state_dict(), 
-                            os.path.join(checkpoint_path, 'model-best.pth'))
+                            os.path.join(checkpoint_path, 'smodel-best.pth'))
                     torch.save(
                             optimizer.state_dict(), 
-                            os.path.join(checkpoint_path, 'info-best.path'))
+                            os.path.join(checkpoint_path, 'sinfo-best.path'))
                     print("model save to %s/model-best.pth"%checkpoint_path)
 
             print()
@@ -205,7 +205,7 @@ def main():
 
     torch.save(
             model_ft.state_dict(), 
-            os.path.join(checkpoint_path, 'model-best.pth'))
+            os.path.join(checkpoint_path, 'smodel-best.pth'))
     print("model save to %s/model-best.pth"%checkpoint_path)
 
 if __name__ == '__main__':

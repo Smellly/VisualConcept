@@ -34,7 +34,7 @@ class VisualConceptDataset(Dataset):
         if self.transform is not None:
             image = self.transform(image)
 
-        label = np.load(imgname.replace('imgs', 'labels') + ".npy")
+        label = np.load(imgname.replace('imgs', 'slabels') + ".npy")
         # print 'label:', label.shape, image.size()
         return image, label
 
