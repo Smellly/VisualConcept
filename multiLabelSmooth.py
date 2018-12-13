@@ -100,7 +100,7 @@ def main():
                     # inputs = inputs.to(device)
                     inputs = inputs.cuda()
                     # labels = labels.float().to(device)
-                    labels = labels.float().cuda()
+                    labels = labels.to(torch.float).cuda()
                     # print('in:', inputs.size(), labels.size())
 
                     # zero the parameter gradients
@@ -110,7 +110,7 @@ def main():
                     # track history if only in train
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(inputs)
-                        preds = torch.gt(outputs, 0)
+                        preds = torch.gt(outputs, 0).to(torch.int8)
                         loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase
@@ -120,7 +120,7 @@ def main():
 
                     # statistics
                     running_loss += loss.item() * inputs.size(0)
-                    running_corrects += torch.sum(preds == labels.data) 
+                    running_corrects += torch.sum(preds == labels.to(torch.int8).data) 
                     # print('pred:', preds.size(), labels.size())
 
                     iteration += 1
@@ -130,7 +130,7 @@ def main():
 
                     if (iteration % print_every == 0):
                         print('{} : Epoch {} Iteration {} Loss: {:.4f} running_loss: {:.4f}, Acc: {:.4f}'.format(
-                                    phase, epoch, iteration, loss, running_loss, 
+                                    phase, epoch, iteration, loss*10000, running_loss, 
                                     running_corrects/batch_size))
 
                 epoch_loss = running_loss / dataset_sizes[phase]
