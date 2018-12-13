@@ -3,11 +3,8 @@
 *.swp
 
 imgs
-
-labels
-blabels
-slabels
+*labels
 
 pkls
 
-logs
+*logs
