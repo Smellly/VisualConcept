@@ -94,6 +94,7 @@ def main():
 
                 running_loss = 0.0
                 running_corrects = 0
+                f1score_sum = 0
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
@@ -132,11 +133,12 @@ def main():
                     recall = tp/(tp + fn)
                     '''
                     tmp1 = (preds == labels.to(torch.int8).data).to(torch.int8)
-                    tmp2 = torch.gt(labels, 0).to(torch.int8).mul(tmp1)
+                    tmp2 = torch.gt(labels,0).to(torch.int8).mul(tmp1)
                     tp = torch.sum(tmp2).to(torch.float)
                     prec = torch.div(tp, torch.sum(preds).to(torch.float))
                     recall = torch.div(tp, torch.sum(labels))
                     f1score = torch.div(2 * prec * recall, prec + recall)
+                    f1score_sum += f1score
 
                     # print('pred:', preds.size(), labels.size())
 
@@ -159,6 +161,7 @@ def main():
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
+                epoch_f1score = f1score_sum / dataset_sizes[phase]
                 if phase == 'train':
                     add_summary_value(tb_summary_writer, 'train_epoch_loss', epoch_loss, iteration)
                     add_summary_value(tb_summary_writer, 'train_epoch_corrects', epoch_acc, iteration)
@@ -171,8 +174,10 @@ def main():
                     phase, epoch_loss, epoch_acc))
 
                 # deep copy the model
-                if phase == 'val' and epoch_acc > best_acc:
-                    best_acc = epoch_acc
+                # if phase == 'val' and epoch_acc > best_acc:
+                if phase == 'val' and epoch_f1score > best_acc:
+                    # best_acc = epoch_acc
+                    best_acc = epoch_f1score
                     best_model_wts = copy.deepcopy(model.state_dict())
                     torch.save(
                             model.state_dict(), 
