@@ -135,8 +135,8 @@ def main():
                     tmp1 = (preds == labels.to(torch.int8).data).to(torch.int8)
                     tmp2 = torch.gt(labels,0).to(torch.int8).mul(tmp1)
                     tp = torch.sum(tmp2).to(torch.float)
-                    prec = torch.div(tp, torch.sum(preds).to(torch.float))
-                    recall = torch.div(tp, torch.sum(labels))
+                    prec = torch.div(tp, torch.sum(preds).to(torch.float) + 1e-8)
+                    recall = torch.div(tp, torch.sum(labels) + 1e-8))
                     f1score = torch.div(2 * prec * recall, prec + recall)
                     f1score_sum += f1score
 
