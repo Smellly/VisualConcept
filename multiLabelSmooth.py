@@ -66,7 +66,7 @@ def main():
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     # device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
     log_every = 10
-    print_every = 100 
+    print_every = 10
     checkpoint_path = 'slogs'
     if not os.path.exists(checkpoint_path):
         os.mkdir(checkpoint_path)
@@ -121,17 +121,41 @@ def main():
                     # statistics
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.to(torch.int8).data) 
+
+                    '''
+                    pred  = [1, 1, 0, 0, 1]
+                    label = [1, 0, 0, 1, 1]
+                    pred == label = [1, 0, 1, 0, 1]
+                    tp = torch.sum([1, 0, 0, 0, 1])
+                    fp = torch.sum(pred)
+                    prec   = tp/(tp + fp)
+                    recall = tp/(tp + fn)
+                    '''
+                    tmp1 = (preds == labels.to(torch.int8).data).to(torch.int8)
+                    tmp2 = torch.gt(labels, 0).to(torch.int8).mul(tmp1)
+                    tp = torch.sum(tmp2).to(torch.float)
+                    prec = torch.div(tp, torch.sum(preds).to(torch.float))
+                    recall = torch.div(tp, torch.sum(labels))
+                    f1score = torch.div(2 * prec * recall, prec + recall)
+
                     # print('pred:', preds.size(), labels.size())
 
                     iteration += 1
-                    if (iteration % log_every == 0):
-                        add_summary_value(tb_summary_writer, 'train_loss', loss, iteration)
-                        # add_summary_value(tb_summary_writer, 'learning_rate', scheduler, iteration)
+                    add_summary_value(tb_summary_writer, 'train_loss', loss, iteration)
+                    add_summary_value(tb_summary_writer, 'running_loss', running_loss/iteration, iteration)
+                    add_summary_value(tb_summary_writer, 'running_corrects', running_corrects/iteration, iteration)
+                    add_summary_value(tb_summary_writer, 'running_tp', tp, iteration)
+                    add_summary_value(tb_summary_writer, 'running_prec', prec, iteration)
+                    add_summary_value(tb_summary_writer, 'running_recall', recall, iteration)
+                    add_summary_value(tb_summary_writer, 'running_f1score', f1score, iteration)
 
                     if (iteration % print_every == 0):
-                        print('{} : Epoch {} Iteration {} Loss: {:.4f} running_loss: {:.4f}, Acc: {:.4f}'.format(
-                                    phase, epoch, iteration, loss*10000, running_loss, 
+                        print('{} : Epoch {} Iteration {} Loss: {:.4f}/10000 running_loss: {:.4f}, Acc: {:.4f}'.format(
+                                    phase, epoch, iteration, loss*10000, running_loss/iteration, 
                                     running_corrects/batch_size))
+                        print('TP: {}, Prec: {}, Recall: {} F1_score: {}'.format(
+                                    tp.data, prec.data, recall.data, f1score.data
+                                    ))
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
@@ -179,19 +203,22 @@ def main():
     # model_ft = myResnet(model, 9360)
     # model_ft = model_ft.to(device)
     model_ft = model_ft.cuda()
-    # todo : adapt to label smoothing
+
     criterion = nn.BCEWithLogitsLoss()
+    # criterion = nn.BCEWithLogitsLoss(reduction='sum')
+    # criterion = nn.MultiLabelMarginLoss()
+
     # Observe that all parameters are being optimized
-    '''
     optimizer_ft = optim.SGD(
             model_ft.parameters(), 
-            lr=0.01, 
+            lr=0.1, 
             momentum=0.9)
     '''
     optimizer_ft = optim.Adam(
             model_ft.parameters(), 
             lr = 0.001
             )
+    '''
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
@@ -200,7 +227,7 @@ def main():
         criterion, 
         optimizer_ft, 
         exp_lr_scheduler,
-        num_epochs=25
+        num_epochs=20
         )
 
     torch.save(
