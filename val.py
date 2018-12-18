@@ -72,7 +72,7 @@ def returnTF():
 
 def main():
     imglist = getImglist(None)
-    modelPath = 'logs/model-best.pth'
+    modelPath = 'slogs/smodel-best.pth'
     vocabPath = 'pkls/vocab_clean.pkl'
     model = loadModel(modelPath)
     vocab = loadVocab(vocabPath)
@@ -88,19 +88,23 @@ def main():
         input_img = V(tf(img).unsqueeze(0)).cuda()
         # logit = model.forward(input_img)
         logit = model(input_img)
-        pred = torch.ceil(logit).cpu().data.numpy()
         # pred = nn.functional.softmax(logit).cpu().data.numpy()
-        pred2 = logit.cpu().data.numpy()
+        pred = nn.functional.sigmoid(logit)
         
         captions = getLabel(imgname)
         
         words = []
-        # print(pred[0], pred[0].shape)
-        # print(pred2.shape, pred2[0], pred2[0].shape)
+        # print('logit:', logit.shape, logit[0], logit[0].shape)
+        # print('prod:', pred.shape, pred[0], pred[0].shape)
+        
+        topn = 10 
+        topvalue = torch.topk(pred, topn)
+        # print('topn', topvalue)
+        # print('topvalue:', topvalue2)
 
-        for ind, val in enumerate(pred2[0]):
-            if val > 1:
-                words.append(vocab[ind])
+        for ind, val in enumerate(topvalue[1][0]):
+            if val > 0:
+                words.append(vocab[val])
         print('imgname:', imgname)
         print('words:', words)
         print('captions:')
