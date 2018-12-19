@@ -1,0 +1,3 @@
+[submodule "pytorch_NEG_loss"]
+	path = pytorch_NEG_loss
+	url = https://github.com/kefirski/pytorch_NEG_loss.git

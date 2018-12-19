@@ -12,6 +12,7 @@ from torchvision import datasets, models, transforms
 
 from visualConceptDataset import VisualConceptDataset
 from myNets import myResnet
+# from ./pytorch_NEG_loss/NEG_loss/neg import NEG_loss
 
 import time
 import os
@@ -102,6 +103,7 @@ def main():
                     inputs = inputs.cuda()
                     # labels = labels.float().to(device)
                     labels = labels.to(torch.float).cuda()
+                    binary_labels = torch.gt(labels, 0).to(torch.int)
                     # print('in:', inputs.size(), labels.size())
 
                     # zero the parameter gradients
@@ -111,7 +113,10 @@ def main():
                     # track history if only in train
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(inputs)
-                        preds = torch.gt(outputs, 0).to(torch.int8)
+                        preds = torch.gt(outputs, 0).to(torch.int)
+                        # loss only consider label 1 predict and 0 predict ignore
+                        # outputs.mul(labels) # label smoothing loss
+                        outputs.mul(binary_labels.to(torch.float))
                         loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase
@@ -121,7 +126,7 @@ def main():
 
                     # statistics
                     running_loss += loss.item() * inputs.size(0)
-                    running_corrects += torch.sum(preds == labels.to(torch.int8).data) 
+                    running_corrects += torch.sum(preds == binary_labels.data) 
 
                     '''
                     pred  = [1, 1, 0, 0, 1]
@@ -132,12 +137,12 @@ def main():
                     prec   = tp/(tp + fp)
                     recall = tp/(tp + fn)
                     '''
-                    tmp1 = (preds == labels.to(torch.int8).data).to(torch.int8)
-                    tmp2 = torch.gt(labels,0).to(torch.int8).mul(tmp1)
+                    tmp1 = (preds == binary_labels.data).to(torch.int)
+                    tmp2 = binary_labels.mul(tmp1)
                     tp = torch.sum(tmp2).to(torch.float)
                     prec = torch.div(tp, torch.sum(preds).to(torch.float) + 1e-8)
-                    recall = torch.div(tp, torch.sum(labels) + 1e-8))
-                    f1score = torch.div(2 * prec * recall, prec + recall)
+                    recall = torch.div(tp, torch.sum(binary_labels.to(torch.float)) + 1e-8)
+                    f1score = torch.div(2 * prec * recall, prec + recall + 1e-8)
                     f1score_sum += f1score
 
                     # print('pred:', preds.size(), labels.size())
@@ -155,7 +160,7 @@ def main():
                         print('{} : Epoch {} Iteration {} Loss: {:.4f}/10000 running_loss: {:.4f}, Acc: {:.4f}'.format(
                                     phase, epoch, iteration, loss*10000, running_loss/iteration, 
                                     running_corrects/batch_size))
-                        print('TP: {}, Prec: {}, Recall: {} F1_score: {}'.format(
+                        print('TP: {}, Prec: {}, Recall: {} F1_score: {}\n'.format(
                                     tp.data, prec.data, recall.data, f1score.data
                                     ))
 
@@ -203,15 +208,22 @@ def main():
     # 提取fc层中固定的参数
     fc_features = model_ft.fc.in_features
     # 修改类别为 vocab_size
-    model_ft.fc = nn.Linear(fc_features, 9360)
+    num_classes = 9360
+    model_ft.fc = nn.Linear(fc_features, num_classes)
 
-    # model_ft = myResnet(model, 9360)
+    # model_ft = myResnet(model, num_classes)
     # model_ft = model_ft.to(device)
     model_ft = model_ft.cuda()
 
-    criterion = nn.BCEWithLogitsLoss()
+    '''
+    For example, if a dataset contains 100 positive and 300 negative examples of a single class, 
+    then pos_weight for the class should be equal to 300. 
+    The loss would act as if the dataset contains 3×100=300 positive examples.
+    '''
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(num_classes/10).cuda()) # average caption length is 9.5
     # criterion = nn.BCEWithLogitsLoss(reduction='sum')
     # criterion = nn.MultiLabelMarginLoss()
+    # criterion = NEG_loss(num_classes, )
 
     # Observe that all parameters are being optimized
     optimizer_ft = optim.SGD(
