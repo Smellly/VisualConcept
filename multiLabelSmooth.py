@@ -183,7 +183,7 @@ def main():
                 # deep copy the model
                 # if phase == 'val' and epoch_acc > best_acc:
                 if phase == 'val' and epoch_f1score > best_acc:
-                    print('epoch_f1score:{.4f}, history_best_score:{.4f}', epoch_f1score, best_acc)
+                    print('epoch_f1score:{}, history_best_score:{}', epoch_f1score.data, best_acc.data)
                     # best_acc = epoch_acc
                     best_acc = epoch_f1score
                     best_model_wts = copy.deepcopy(model.state_dict())
