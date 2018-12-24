@@ -168,11 +168,13 @@ def main():
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
                 epoch_f1score = f1score_sum / dataset_sizes[phase]
                 if phase == 'train':
-                    add_summary_value(tb_summary_writer, 'train_epoch_loss', epoch_loss, iteration)
-                    add_summary_value(tb_summary_writer, 'train_epoch_corrects', epoch_acc, iteration)
+                    add_summary_value(tb_summary_writer, 'train_epoch_loss', epoch_loss, epoch)
+                    add_summary_value(tb_summary_writer, 'train_epoch_corrects', epoch_acc, epoch)
+                    add_summary_value(tb_summary_writer, 'train_epoch_f1score', epoch_f1score, epoch)
                 else:
-                    add_summary_value(tb_summary_writer, 'val_epoch_loss', epoch_loss, iteration)
-                    add_summary_value(tb_summary_writer, 'val_epoch_corrects', epoch_acc, iteration)
+                    add_summary_value(tb_summary_writer, 'val_epoch_loss', epoch_loss, epoch)
+                    add_summary_value(tb_summary_writer, 'val_epoch_corrects', epoch_acc, epoch)
+                    add_summary_value(tb_summary_writer, 'val_epoch_f1score', epoch_f1score, epoch)
 
 
                 print('{} Loss: {:.4f} Acc: {:.4f}'.format(
@@ -181,6 +183,7 @@ def main():
                 # deep copy the model
                 # if phase == 'val' and epoch_acc > best_acc:
                 if phase == 'val' and epoch_f1score > best_acc:
+                    print('epoch_f1score:{.4f}, history_best_score:{.4f}', epoch_f1score, best_acc)
                     # best_acc = epoch_acc
                     best_acc = epoch_f1score
                     best_model_wts = copy.deepcopy(model.state_dict())
@@ -220,7 +223,7 @@ def main():
     then pos_weight for the class should be equal to 300. 
     The loss would act as if the dataset contains 3×100=300 positive examples.
     '''
-    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(num_classes/10).cuda()) # average caption length is 9.5
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(num_classes/20).cuda()) # average caption length is 9.5
     # criterion = nn.BCEWithLogitsLoss(reduction='sum')
     # criterion = nn.MultiLabelMarginLoss()
     # criterion = NEG_loss(num_classes, )
