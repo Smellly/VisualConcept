@@ -3,9 +3,9 @@ import argparse
 def parse_opt():
     parser = argparse.ArgumentParser()
     # Data input settings
-    parser.add_argument('--input_data_dir', type=str, default='/media/disk0/jay/workspace/visual-concept/imgs',
+    parser.add_argument('--input_data_dir', type=str, default='',
                     help='path to the json file containing additional info and vocab')
-    parser.add_argument('--input_label', type=str, default='data/coco_label.h5',
+    parser.add_argument('--input_label_dir', type=str, default='',
                     help='path to the h5file containing the preprocessed dataset')
     parser.add_argument('--start_from', type=str, default=None,
                     help="""continue training from saved model at this path. Path must contain files saved by previous training process: 
@@ -14,6 +14,7 @@ def parse_opt():
                                               Note: this file contains absolute paths, be careful when moving files around;
                         'model.ckpt-*'      : file(s) with model definition (created by tf)
                     """)
+    '''
     parser.add_argument('--cached_tokens', type=str, default='coco-train-idxs',
                     help='Cached token file for calculating cider score during self critical training.')
 
@@ -36,22 +37,19 @@ def parse_opt():
                     help='2048 for resnet, 512 for vgg')
     parser.add_argument('--logit_layers', type=int, default=1,
                     help='number of layers in the RNN')
+    '''
+    parser.add_argument('--num_classes', type=int, default=4267,
+                    help='number of label classes')       
 
 
+    '''
     parser.add_argument('--use_bn', type=int, default=0,
                     help='If 1, then do batch_normalization first in att_embed, \
                           if 2 then do bn both in the beginning and the end of att_embed')
     parser.add_argument('--use_ln', type=int, default=0,
                     help='If 1, then do layer_normalization first in att_embed, \
                           if 2 then do bn both in the beginning and the end of att_embed')
-
-    # feature manipulation
-    parser.add_argument('--norm_att_feat', type=int, default=0,
-                    help='If normalize attention features')
-    parser.add_argument('--use_box', type=int, default=0,
-                    help='If use box features')
-    parser.add_argument('--norm_box_feat', type=int, default=0,
-                    help='If use box, do we normalize box feature')
+    '''
 
     # Optimization: General
     parser.add_argument('--max_epochs', type=int, default=-30,
@@ -81,6 +79,7 @@ def parse_opt():
     parser.add_argument('--weight_decay', type=float, default=0,
                     help='weight_decay')
 
+    '''
     parser.add_argument('--scheduled_sampling_start', type=int, default=-1, 
                     help='at what iteration to start decay gt probability')
     parser.add_argument('--scheduled_sampling_increase_every', type=int, default=5, 
@@ -89,12 +88,15 @@ def parse_opt():
                     help='How much to update the prob')
     parser.add_argument('--scheduled_sampling_max_prob', type=float, default=0.25, 
                     help='Maximum scheduled sampling prob.')
-
-    parser.add_argument('--num_classes', type=int, default=4267,
-                    help='number of label classes')       
+    '''
 
 
     # Evaluation/Checkpointing
+    parser.add_argument('--losses_log_every', type=int, default=10,
+                    help='How often do we snapshot losses, for inclusion in the progress dump? (0 = disable)')       
+    parser.add_argument('--print_every', type=int, default=100,
+                    help='How often do we print (0 = disable)')       
+    '''
     parser.add_argument('--val_images_use', type=int, default=3200,
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
     parser.add_argument('--save_checkpoint_every', type=int, default=2500,
@@ -103,16 +105,14 @@ def parse_opt():
                     help='directory to store checkpointed models')
     parser.add_argument('--language_eval', type=int, default=0,
                     help='Evaluate language as well (1 = yes, 0 = no)? BLEU/CIDEr/METEOR/ROUGE_L? requires coco-caption code from Github.')
-    parser.add_argument('--losses_log_every', type=int, default=10,
-                    help='How often do we snapshot losses, for inclusion in the progress dump? (0 = disable)')       
-    parser.add_argument('--print_every', type=int, default=100,
-                    help='How often do we print (0 = disable)')       
     parser.add_argument('--load_best_score', type=int, default=1,
                     help='Do we load previous best score when resuming training.')       
+    '''
 
     # misc
     parser.add_argument('--id', type=str, default='s_noun',
                     help='an id identifying this run/job. used in cross-val and appended when writing progress files')
+    '''
     parser.add_argument('--train_only', type=int, default=0,
                     help='if true then use 80k, else use 110k')
 
@@ -122,6 +122,7 @@ def parse_opt():
                     help='The reward weight from cider')
     parser.add_argument('--bleu_reward_weight', type=float, default=0,
                     help='The reward weight from bleu4')
+    '''
 
     args = parser.parse_args()
 
