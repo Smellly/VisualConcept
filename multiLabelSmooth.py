@@ -18,6 +18,8 @@ import time
 import os
 import copy
 
+import opts
+
 try:
     import tensorboardX as tb
 except ImportError:
@@ -29,7 +31,8 @@ def add_summary_value(writer, key, value, iteration):
         writer.add_scalar(key, value, iteration)
 
 def main():
-    data_dir = '/media/disk0/jay/workspace/visual-concept/imgs'
+    opt = opts.parse_opt()
+    data_dir = opt.intput_data_dir
 
     # Data augmentation and normalization for training
     # Just normalization for validation
@@ -48,7 +51,7 @@ def main():
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
     }
-    batch_size = 64
+    batch_size = opt.batch_size
     image_datasets = {
             x: VisualConceptDataset(
                 os.path.join(data_dir, x),
@@ -66,9 +69,9 @@ def main():
 
     dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
     # device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
-    log_every = 10
-    print_every = 10
-    checkpoint_path = 'slogs'
+    log_every = opt.losses_log_every
+    print_every = opt.print_every
+    checkpoint_path = opt.checkpoint_path
     if not os.path.exists(checkpoint_path):
         os.mkdir(checkpoint_path)
     tb_summary_writer = tb and tb.SummaryWriter(checkpoint_path)
@@ -183,17 +186,17 @@ def main():
                 # deep copy the model
                 # if phase == 'val' and epoch_acc > best_acc:
                 if phase == 'val' and epoch_f1score > best_acc:
-                    print('epoch_f1score:{}, history_best_score:{}', epoch_f1score.data, best_acc.data)
+                    print('epoch_f1score:{}, history_best_score:{}', epoch_f1score, best_acc)
                     # best_acc = epoch_acc
                     best_acc = epoch_f1score
                     best_model_wts = copy.deepcopy(model.state_dict())
                     torch.save(
                             model.state_dict(), 
-                            os.path.join(checkpoint_path, 'smodel-best.pth'))
+                            os.path.join(checkpoint_path, '%s-model-best.pth'%opt.id))
                     torch.save(
                             optimizer.state_dict(), 
-                            os.path.join(checkpoint_path, 'sinfo-best.path'))
-                    print("model save to %s/model-best.pth"%checkpoint_path)
+                            os.path.join(checkpoint_path, '%s-info-best.path'%opt.id))
+                    print("model save to %s/%s-model-best.pth"%(checkpoint_path, opt.id))
 
             print()
 
@@ -211,7 +214,7 @@ def main():
     # 提取fc层中固定的参数
     fc_features = model_ft.fc.in_features
     # 修改类别为 vocab_size
-    num_classes = 9360
+    num_classes = opt.num_classes
     model_ft.fc = nn.Linear(fc_features, num_classes)
 
     # model_ft = myResnet(model, num_classes)
@@ -223,37 +226,43 @@ def main():
     then pos_weight for the class should be equal to 300. 
     The loss would act as if the dataset contains 3×100=300 positive examples.
     '''
-    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(num_classes/20).cuda()) # average caption length is 9.5
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(opt.pos_weight).cuda()) # average caption length is 9.5
     # criterion = nn.BCEWithLogitsLoss(reduction='sum')
     # criterion = nn.MultiLabelMarginLoss()
     # criterion = NEG_loss(num_classes, )
 
     # Observe that all parameters are being optimized
-    optimizer_ft = optim.SGD(
-            model_ft.parameters(), 
-            lr=0.1, 
-            momentum=0.9)
-    '''
-    optimizer_ft = optim.Adam(
-            model_ft.parameters(), 
-            lr = 0.001
-            )
-    '''
+    if opt.optim == 'SGD':
+        optimizer_ft = optim.SGD(
+                model_ft.parameters(), 
+                lr=opt.learning_rate, 
+                momentum=opt.momentum)
+    elif opt.optim == 'adam':
+        optimizer_ft = optim.Adam(
+                model_ft.parameters(), 
+                lr = 0.001
+                )
+    else:
+        print('%s is not supported yet'%opt.optim)
+    
     # Decay LR by a factor of 0.1 every 7 epochs
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+    exp_lr_scheduler = lr_scheduler.StepLR(
+            optimizer_ft, 
+            step_size=opt.learning_rate_decay_every, 
+            gamma=opt.learning_rate_decay_factor)
 
     model_ft = train_model(
         model_ft, 
         criterion, 
         optimizer_ft, 
         exp_lr_scheduler,
-        num_epochs=20
+        num_epochs=opt.max_epochs
         )
 
     torch.save(
             model_ft.state_dict(), 
-            os.path.join(checkpoint_path, 'smodel-best.pth'))
-    print("model save to %s/model-best.pth"%checkpoint_path)
+            os.path.join(checkpoint_path, '%s-model-best.pth'%opt.id))
+    print("model save to %s/%s-model-best.pth"%(checkpoint_path, opt.id))
 
 if __name__ == '__main__':
     main()
