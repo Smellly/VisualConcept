@@ -74,7 +74,9 @@ def main():
     checkpoint_path = opt.checkpoint_path
     if not os.path.exists(checkpoint_path):
         os.mkdir(checkpoint_path)
-    tb_summary_writer = tb and tb.SummaryWriter(checkpoint_path)
+    TIMESTAMP = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
+    tb_summary_writer = tb and tb.SummaryWriter(
+            op.path.join(checkpoint_path, TIMESTAMP))
 
     def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         since = time.time()
