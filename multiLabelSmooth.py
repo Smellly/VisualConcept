@@ -55,6 +55,7 @@ def main():
     image_datasets = {
             x: VisualConceptDataset(
                 os.path.join(data_dir, x),
+                os.path.join(opt.input_label_dir, x),
                 data_transforms[x]) 
             for x in ['train', 'val']
             }
