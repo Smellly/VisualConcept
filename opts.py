@@ -96,13 +96,13 @@ def parse_opt():
                     help='How often do we snapshot losses, for inclusion in the progress dump? (0 = disable)')       
     parser.add_argument('--print_every', type=int, default=100,
                     help='How often do we print (0 = disable)')       
+    parser.add_argument('--checkpoint_path', type=str, default='save',
+                    help='directory to store checkpointed models')
     '''
     parser.add_argument('--val_images_use', type=int, default=3200,
                     help='how many images to use when periodically evaluating the validation loss? (-1 = all)')
     parser.add_argument('--save_checkpoint_every', type=int, default=2500,
                     help='how often to save a model checkpoint (in iterations)?')
-    parser.add_argument('--checkpoint_path', type=str, default='slogs',
-                    help='directory to store checkpointed models')
     parser.add_argument('--language_eval', type=int, default=0,
                     help='Evaluate language as well (1 = yes, 0 = no)? BLEU/CIDEr/METEOR/ROUGE_L? requires coco-caption code from Github.')
     parser.add_argument('--load_best_score', type=int, default=1,
@@ -127,17 +127,19 @@ def parse_opt():
     args = parser.parse_args()
 
     # Check if args are valid
+    assert args.losses_log_every > 0, "losses_log_every should be greater than 0"
+    assert args.batch_size > 0, "batch_size should be greater than 0"
+    '''
     assert args.rnn_size > 0, "rnn_size should be greater than 0"
     assert args.num_layers > 0, "num_layers should be greater than 0"
     assert args.input_encoding_size > 0, "input_encoding_size should be greater than 0"
-    assert args.batch_size > 0, "batch_size should be greater than 0"
     assert args.drop_prob_lm >= 0 and args.drop_prob_lm < 1, "drop_prob_lm should be between 0 and 1"
     assert args.seq_per_img > 0, "seq_per_img should be greater than 0"
     assert args.beam_size > 0, "beam_size should be greater than 0"
     assert args.save_checkpoint_every > 0, "save_checkpoint_every should be greater than 0"
-    assert args.losses_log_every > 0, "losses_log_every should be greater than 0"
     assert args.language_eval == 0 or args.language_eval == 1, "language_eval should be 0 or 1"
     assert args.load_best_score == 0 or args.load_best_score == 1, "language_eval should be 0 or 1"
     assert args.train_only == 0 or args.train_only == 1, "language_eval should be 0 or 1"
+    '''
 
     return args

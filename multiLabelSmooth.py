@@ -15,6 +15,7 @@ from myNets import myResnet
 # from ./pytorch_NEG_loss/NEG_loss/neg import NEG_loss
 
 import time
+from datetime import datetime
 import os
 import copy
 
@@ -32,7 +33,7 @@ def add_summary_value(writer, key, value, iteration):
 
 def main():
     opt = opts.parse_opt()
-    data_dir = opt.intput_data_dir
+    data_dir = opt.input_data_dir
 
     # Data augmentation and normalization for training
     # Just normalization for validation
@@ -77,7 +78,7 @@ def main():
         os.mkdir(checkpoint_path)
     TIMESTAMP = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
     tb_summary_writer = tb and tb.SummaryWriter(
-            op.path.join(checkpoint_path, TIMESTAMP))
+            os.path.join(checkpoint_path, TIMESTAMP))
 
     def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
         since = time.time()
