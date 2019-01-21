@@ -58,6 +58,10 @@ def parse_opt():
                     help='minibatch size')
     parser.add_argument('--pos_weight', type=float, default=10, #5.,
                     help='pos_weight param in BCEWithLogitsLoss')
+    parser.add_argument('--label_smoothing', type=int, default=0,
+                    help='if 1 then do label smoothing,\
+                          if 0 then don\'t do label smoothing. \
+                          default 0')
 
     #Optimization: for the Language Model
     parser.add_argument('--optim', type=str, default='SGD',

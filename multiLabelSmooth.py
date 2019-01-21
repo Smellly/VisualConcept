@@ -93,7 +93,7 @@ def main():
             print('-' * 100)
 
             # Each epoch has a training and validation phase
-            for phase in ['train', 'val']:
+            for phase in ['val', 'train']:
                 if phase == 'train':
                     scheduler.step()
                     model.train()  # Set model to training mode
@@ -122,8 +122,10 @@ def main():
                         outputs = model(inputs)
                         preds = torch.gt(outputs, 0).to(torch.int)
                         # loss only consider label 1 predict and 0 predict ignore
-                        # outputs.mul(labels) # label smoothing loss
-                        outputs.mul(binary_labels.to(torch.float))
+                        if opt.label_smoothing:
+                            outputs.mul(labels) # label smoothing loss
+                        else:
+                            outputs.mul(binary_labels.to(torch.float)) # without label smoothing
                         loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase
@@ -190,7 +192,7 @@ def main():
                 # deep copy the model
                 # if phase == 'val' and epoch_acc > best_acc:
                 if phase == 'val' and epoch_f1score > best_acc:
-                    print('epoch_f1score:{}, history_best_score:{}', epoch_f1score, best_acc)
+                    print('epoch_f1score: %f , history_best_score: %f'%(epoch_f1score, best_acc))
                     # best_acc = epoch_acc
                     best_acc = epoch_f1score
                     best_model_wts = copy.deepcopy(model.state_dict())
