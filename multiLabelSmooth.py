@@ -256,6 +256,9 @@ def main():
             optimizer_ft, 
             step_size=opt.learning_rate_decay_every, 
             gamma=opt.learning_rate_decay_factor)
+    
+    if opt.label_smoothing:
+        print('Using Label Smoothing.')
 
     model_ft = train_model(
         model_ft, 
