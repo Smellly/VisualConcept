@@ -102,7 +102,9 @@ def main():
 
                 running_loss = 0.0
                 running_corrects = 0
-                f1score_sum = 0
+                running_prec = 0.0
+                running_recall = 0.0
+                f1score_sum = 0.0
 
                 # Iterate over data.
                 for inputs, labels in dataloaders[phase]:
@@ -123,9 +125,11 @@ def main():
                         preds = torch.gt(outputs, 0).to(torch.int)
                         # loss only consider label 1 predict and 0 predict ignore
                         if opt.label_smoothing:
-                            outputs.mul(labels) # label smoothing loss
+                            # label smoothing loss
+                            outputs.mul(labels) 
                         else:
-                            outputs.mul(binary_labels.to(torch.float)) # without label smoothing
+                            # without label smoothing
+                            outputs.mul(binary_labels.to(torch.float)) 
                         loss = criterion(outputs, labels)
 
                         # backward + optimize only if in training phase
@@ -140,11 +144,10 @@ def main():
                     '''
                     pred  = [1, 1, 0, 0, 1]
                     label = [1, 0, 0, 1, 1]
-                    pred == label = [1, 0, 1, 0, 1]
+                    pred == label -> [1, 0, 1, 0, 1]
                     tp = torch.sum([1, 0, 0, 0, 1])
-                    fp = torch.sum(pred)
-                    prec   = tp/(tp + fp)
-                    recall = tp/(tp + fn)
+                    prec   = tp / torch.sum(pred)
+                    recall = tp / torch.sum(label)
                     '''
                     tmp1 = (preds == binary_labels.data).to(torch.int)
                     tmp2 = binary_labels.mul(tmp1)
@@ -152,6 +155,9 @@ def main():
                     prec = torch.div(tp, torch.sum(preds).to(torch.float) + 1e-8)
                     recall = torch.div(tp, torch.sum(binary_labels.to(torch.float)) + 1e-8)
                     f1score = torch.div(2 * prec * recall, prec + recall + 1e-8)
+
+                    running_prec += prec
+                    running_recall += recall
                     f1score_sum += f1score
 
                     # print('pred:', preds.size(), labels.size())
@@ -169,25 +175,34 @@ def main():
                         print('{} : Epoch {} Iteration {} Loss: {:.4f}/10000 running_loss: {:.4f}, Acc: {:.4f}'.format(
                                     phase, epoch, iteration, loss*10000, running_loss/iteration, 
                                     running_corrects/batch_size))
-                        print('TP: {}, Prec: {}, Recall: {} F1_score: {}\n'.format(
+                        print('TP: {}, Prec: {}, Recall: {} F1_score: {}'.format(
                                     tp.data, prec.data, recall.data, f1score.data
                                     ))
 
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_acc = running_corrects.double() / dataset_sizes[phase]
+                epoch_prec = running_prec / dataset_sizes[phase]
+                epoch_recall = running_recall / dataset_sizes[phase]
                 epoch_f1score = f1score_sum / dataset_sizes[phase]
+
                 if phase == 'train':
                     add_summary_value(tb_summary_writer, 'train_epoch_loss', epoch_loss, epoch)
                     add_summary_value(tb_summary_writer, 'train_epoch_corrects', epoch_acc, epoch)
                     add_summary_value(tb_summary_writer, 'train_epoch_f1score', epoch_f1score, epoch)
+                    add_summary_value(tb_summary_writer, 'train_epoch_prec', epoch_prec, epoch)
+                    add_summary_value(tb_summary_writer, 'train_epoch_recall', epoch_recall, epoch)
                 else:
                     add_summary_value(tb_summary_writer, 'val_epoch_loss', epoch_loss, epoch)
                     add_summary_value(tb_summary_writer, 'val_epoch_corrects', epoch_acc, epoch)
                     add_summary_value(tb_summary_writer, 'val_epoch_f1score', epoch_f1score, epoch)
+                    add_summary_value(tb_summary_writer, 'val_epoch_prec', epoch_prec, epoch)
+                    add_summary_value(tb_summary_writer, 'val_epoch_recall', epoch_recall, epoch)
 
-
-                print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+                print('{} Loss: {:.4f} Acc: {:.4f} '.format(
                     phase, epoch_loss, epoch_acc))
+                print('prec: {:.4f} recall: {:.4f} f1score: {:.4f}'.format(
+                    epoch_prec, epoch_recall, epoch_f1score
+                    ))
 
                 # deep copy the model
                 # if phase == 'val' and epoch_acc > best_acc:
@@ -202,6 +217,7 @@ def main():
                     torch.save(
                             optimizer.state_dict(), 
                             os.path.join(checkpoint_path, '%s-info-best.path'%opt.id))
+                    
                     print("model save to %s/%s-model-best.pth"%(checkpoint_path, opt.id))
 
             print()
