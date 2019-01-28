@@ -176,7 +176,7 @@ def main():
                                     phase, epoch, iteration, loss*10000, running_loss/iteration, 
                                     running_corrects/batch_size))
                         print('TP: {}, Prec: {}, Recall: {} F1_score: {}'.format(
-                                    tp.data, prec.data, recall.data, f1score.data
+                                    tp.data/batch_size, prec.data/batch_size, recall.data/batch_size, f1score.data/batch_size
                                     ))
 
                 epoch_loss = running_loss / dataset_sizes[phase]
@@ -198,7 +198,8 @@ def main():
                     add_summary_value(tb_summary_writer, 'val_epoch_prec', epoch_prec, epoch)
                     add_summary_value(tb_summary_writer, 'val_epoch_recall', epoch_recall, epoch)
 
-                print('{} Loss: {:.4f} Acc: {:.4f} '.format(
+                print()
+                print('{} : Loss: {:.4f} Acc: {:.4f} '.format(
                     phase, epoch_loss, epoch_acc))
                 print('prec: {:.4f} recall: {:.4f} f1score: {:.4f}\n'.format(
                     epoch_prec, epoch_recall, epoch_f1score
