@@ -200,7 +200,7 @@ def main():
 
                 print('{} Loss: {:.4f} Acc: {:.4f} '.format(
                     phase, epoch_loss, epoch_acc))
-                print('prec: {:.4f} recall: {:.4f} f1score: {:.4f}'.format(
+                print('prec: {:.4f} recall: {:.4f} f1score: {:.4f}\n'.format(
                     epoch_prec, epoch_recall, epoch_f1score
                     ))
 
