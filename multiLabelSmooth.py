@@ -259,11 +259,12 @@ def main():
         optimizer_ft = optim.SGD(
                 model_ft.parameters(), 
                 lr=opt.learning_rate, 
-                momentum=opt.momentum)
+                momentum=opt.momentum
+                )
     elif opt.optim == 'adam':
         optimizer_ft = optim.Adam(
                 model_ft.parameters(), 
-                lr = 0.001
+                lr = opt.learning_rate
                 )
     else:
         print('%s is not supported yet'%opt.optim)
