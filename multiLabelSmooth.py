@@ -220,6 +220,7 @@ def main():
                             os.path.join(checkpoint_path, '%s-info-best.path'%opt.id))
                     
                     print("model save to %s/%s-model-best.pth"%(checkpoint_path, opt.id))
+                    print()
 
             print()
 
