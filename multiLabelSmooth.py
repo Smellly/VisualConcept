@@ -256,7 +256,7 @@ def main():
     # criterion = NEG_loss(num_classes, )
 
     # Observe that all parameters are being optimized
-    if opt.optim == 'SGD':
+    if opt.optim == 'sgd':
         optimizer_ft = optim.SGD(
                 model_ft.parameters(), 
                 lr=opt.learning_rate, 

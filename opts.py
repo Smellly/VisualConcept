@@ -64,7 +64,7 @@ def parse_opt():
                           default 0')
 
     #Optimization: for the Language Model
-    parser.add_argument('--optim', type=str, default='SGD',
+    parser.add_argument('--optim', type=str, default='sgd',
                     help='what update to use? rmsprop|sgd|sgdmom|adagrad|adam')
     parser.add_argument('--learning_rate', type=float, default=0.1,
                     help='learning rate')
